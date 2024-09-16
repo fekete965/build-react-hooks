@@ -5,26 +5,27 @@ const UPDATE = Symbol('phase.update')
 type Phase = typeof INITIALIZATION | typeof UPDATE
 let phase: Phase
 // 🐨 make a hookIndex variable here that starts at 0
+let hookIndex = 0
 // 🐨 make a variable called "states" which is an array of arrays (one for each
 // return value of a useState call)
-
-// 💣 delete these variable declarations
-let state: any, setState: any
+let states: Array<[any, (newState: any) => void]> = []
 
 export function useState<State>(initialState: State) {
-	// 🐨 create a variable called "id" and assign it to "hookIndex++"
+	// 🐨 create a variable called "id" and assign it to "hookIndex++"`
+	const id = hookIndex++
+
 	if (phase === INITIALIZATION) {
-		// 🐨 assign states[id] to an array with the initialState and the setState function
-		// rather than assigning the values to the old variables
-		state = initialState
-		setState = (newState: State) => {
-			// 🐨 instead of reassigning the variable state to the newState, update states[id][0] to it.
-			state = newState
-			render(UPDATE)
-		}
+		states[id] = [
+			initialState,
+			(newState: State) => {
+				// 🐨 instead of reassigning the variable state to the newState, update states[id][0] to it.
+				states[id][0] = newState
+				render(UPDATE)
+			},
+		]
 	}
 	// 🐨 return the value at states[id] instead of the old variables
-	return [state, setState] as [State, (newState: State) => void]
+	return states[id] as [State, (newState: State) => void]
 }
 
 function Counter() {
@@ -50,6 +51,7 @@ const appRoot = createRoot(rootEl)
 
 function render(newPhase: Phase) {
 	// 🐨 set the hookIndex to 0
+	hookIndex = 0
 	phase = newPhase
 	appRoot.render(<Counter />)
 }

@@ -1,7 +1,12 @@
-// 💣 delete this
-import { useState } from 'react'
-
 import { createRoot } from 'react-dom/client'
+
+function useState<State>(initialValue: State) {
+	let state = initialValue
+
+	const setState = (newState: State) => {}
+
+	return [state, setState] as const
+}
 
 // 🐨 create a `useState` function which accepts the initial state and returns
 // an array of the state and a no-op function: () => {}

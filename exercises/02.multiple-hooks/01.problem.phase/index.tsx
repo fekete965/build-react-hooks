@@ -2,21 +2,25 @@ import { createRoot } from 'react-dom/client'
 
 // 🐨 create two Symbols for the phase: "INITIALIZATION" and "UPDATE"
 // 💯 as extra credit, give them a descriptive name
+const INITIALIZATION = Symbol('phase.initialization')
+const UPDATE = Symbol('phase.update')
 
 // 🦺 create a type called Phase which is the typeof INITIALIZATION | typeof UPDATE
+type Phase = typeof INITIALIZATION | typeof UPDATE
 
 // 🐨 create a variable called phase of type Phase and set it to INITIALIZATION
+let phase: Phase = INITIALIZATION
 
 let state: any, setState: any
 
 export function useState<State>(initialState: State) {
 	// 🐨 change this to check whether the phase is INITIALIZATION
-	if (state === undefined) {
+	if (phase === INITIALIZATION) {
 		state = initialState
 		setState = (newState: State) => {
 			state = newState
 			// 🐨 pass the UPDATE phase to render here
-			render()
+			render(UPDATE)
 		}
 	}
 	return [state, setState] as [State, (newState: State) => void]
@@ -44,10 +48,11 @@ document.body.append(rootEl)
 const appRoot = createRoot(rootEl)
 
 // 🐨 accept a newPhase argument
-function render() {
+function render(newPhase: Phase) {
 	// 🐨 assign the phase to the newPhase
+	phase = newPhase
 	appRoot.render(<Counter />)
 }
 
 // 🐨 call this with the INITIALIZATION phase
-render()
+render(INITIALIZATION)

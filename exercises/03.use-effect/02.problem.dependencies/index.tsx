@@ -8,10 +8,14 @@ let phase: Phase
 let hookIndex = 0
 const states: Array<[any, (newState: any) => void]> = []
 type EffectCallback = () => void
-const effects: Array<{
+
+type Effect = {
 	callback: EffectCallback
-	// 🦺 add an optional deps and prevDeps properties which can be arrays of anything
-}> = []
+	deps?: undefined | any[]
+	prevDeps?: undefined | any[]
+}
+
+const effects: Array<Effect> = []
 
 export function useState<State>(initialState: State) {
 	const id = hookIndex++
@@ -28,10 +32,14 @@ export function useState<State>(initialState: State) {
 }
 
 // 🐨 add an optional deps argument here
-export function useEffect(callback: EffectCallback) {
+export function useEffect(callback: EffectCallback, deps?: any[]) {
 	const id = hookIndex++
-	// 🐨 add deps and prevDeps to this object - prevDeps should be "effects[id]?.deps"
-	effects[id] = { callback }
+
+	effects[id] = {
+		callback,
+		prevDeps: effects[id]?.deps,
+		deps,
+	}
 }
 
 function Counter() {
@@ -47,7 +55,6 @@ function Counter() {
 		} else {
 			console.info('consider yourself ineffective!')
 		}
-		// @ts-expect-error 💣 delete this comment
 	}, [enabled])
 
 	return (
@@ -74,13 +81,31 @@ function render(newPhase: Phase) {
 	for (const effect of effects) {
 		if (!effect) continue
 
-		// 🐨 Create a "hasDepsChanged" variable to determine whether the effect should be called.
-		// If the effect has no deps, "hasDepsChanged" should be true.
-		// If the effect does have deps, "hasDepsChanged" should calculate whether any item
-		// in the "deps" array is different from the corresponding item in the "prevDeps" array,
-		// and return true if so, false otherwise.
+		if (effect.deps == null) {
+			effect.callback()
+			continue
+		}
 
-		effect.callback()
+		if (effect.deps.length !== effect.prevDeps?.length) {
+			effect.callback()
+			continue
+		}
+
+		let hasDepsChanged = false
+
+		for (let i = 0; i < effect.prevDeps.length; i++) {
+			const prevValue = effect.prevDeps[i]
+			const newValue = effect.deps[i]
+
+			if (!Object.is(prevValue, newValue)) {
+				hasDepsChanged = true
+				break
+			}
+		}
+
+		if (hasDepsChanged) {
+			effect.callback()
+		}
 	}
 }
 
